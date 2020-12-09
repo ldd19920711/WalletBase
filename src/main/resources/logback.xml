@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+<property name="LOG_HOME" value="com.linktech"/>
+<property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS}
+    [%thread] %-5level %logger{80} - %msg%n"/>
+<!--控制台输出-->
+<appender name="LOG_CONSOLE"
+  class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <pattern>${LOG_PATTERN}</pattern>
+        <charset>UTF-8</charset>
+    </encoder>
+</appender>
+<!--全量日志-->
+<appender name="FILE_INFO"
+  class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <rollingPolicy
+      class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+        <!-- 按天和大小回滚 -->
+        <fileNamePattern>log/first-token-invoker.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+        <!--每个日志文件最大500M-->
+        <maxFileSize>100MB</maxFileSize>
+        <!--最多保存14个⽂件，具体⾃⼰调节-->
+        <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <pattern>${LOG_PATTERN}</pattern>
+        <charset>UTF-8</charset>
+    </encoder>
+</appender>
+<!--error级别日志-->
+<appender name="FILE_ERROR"
+  class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <level>ERROR</level>
+        <onMatch>ACCEPT</onMatch>
+        <onMismatch>DENY</onMismatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <!-- 按天回滚 -->
+        <fileNamePattern>log/first-token-invoker-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+        <!-- keep 14days worth of history-->
+        <maxHistory>30</maxHistory>
+        <cleanHistoryOnStart>true</cleanHistoryOnStart>
+    </rollingPolicy>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <pattern>${LOG_PATTERN}</pattern>
+        <charset>UTF-8</charset>
+    </encoder>
+</appender>
+<appender name="ASYNC_FILE_INFO"
+  class="ch.qos.logback.classic.AsyncAppender">
+    <!-- 不丢失⽇志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、
+   INFO级别的⽇志 -->
+    <discardingThreshold>0</discardingThreshold>
+    <!-- 更改默认的队列的深度,该值会影响性能.默认值为256 -->
+    <queueSize>512</queueSize>
+    <!-- 添加附加的appender,最多只能添加⼀个 -->
+    <appender-ref ref="FILE_INFO"/>
+    <neverBlock>true</neverBlock>
+</appender>
+<logger name="org.apache">
+    <level value="INFO"/>
+</logger>
+<logger name="org.springframework">
+    <level value="WARN"/>
+</logger>
+<logger name="io.netty">
+    <level value="WARN"/>
+</logger>
+<logger name="com.google">
+    <level value="WARN"/>
+</logger>
+<logger name="java.sql">
+    <level value="INFO"/>
+</logger>
+<logger name="com.oppo">
+    <level value="INFO"/>
+</logger>
+<root level="INFO">
+    <appender-ref ref="ASYNC_FILE_INFO"/>
+    <appender-ref ref="FILE_ERROR"/>
+    <!-- 本地调试才把console⽇志打开-->
+    <appender-ref ref="LOG_CONSOLE"/>
+</root>
+</configuration>
