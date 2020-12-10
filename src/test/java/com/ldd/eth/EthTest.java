@@ -144,7 +144,7 @@ public class EthTest {
    * keystore生成钱包
    */
   @Test
-  public void test3() {
+  public void test3() throws Exception{
     //region keystoreContent
     String keystoreContent = "{\n"
         + "    \"address\":\"0b180b56aa7c8cfa74d076a606c0c6ee4c9c7362\",\n"

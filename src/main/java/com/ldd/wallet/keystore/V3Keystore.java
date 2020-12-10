@@ -2,6 +2,7 @@ package com.ldd.wallet.keystore;
 
 import com.google.common.base.Strings;
 import com.ldd.foundation.crypto.Crypto;
+import com.ldd.wallet.address.TronAddressCreator;
 import java.util.UUID;
 import org.bitcoinj.core.NetworkParameters;
 import com.ldd.foundation.utils.MetaUtil;
@@ -44,8 +45,12 @@ public class V3Keystore extends IMTKeystore implements ExportableKeystore {
       prvKeyBytes = NumericUtil.hexToBytes(prvKeyHex);
       new PrivateKeyValidator(prvKeyHex).validate();
       this.address = new EthereumAddressCreator().fromPrivateKey(prvKeyBytes);
+    }else if (metadata.getChainType().equals(ChainType.TRON)){
+      prvKeyBytes = NumericUtil.hexToBytes(prvKeyHex);
+      new PrivateKeyValidator(prvKeyHex).validate();
+      this.address = new TronAddressCreator().fromPrivateKey(prvKeyBytes);
     } else {
-      throw new TokenException("Can't init eos keystore in this constructor");
+      throw new TokenException("Can't init other keystore in this constructor");
     }
     this.crypto = Crypto.createPBKDF2Crypto(password, prvKeyBytes);
     metadata.setWalletType(Metadata.V3);

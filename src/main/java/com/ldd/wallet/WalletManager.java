@@ -11,6 +11,7 @@ import com.ldd.foundation.utils.MnemonicUtil;
 import com.ldd.foundation.utils.NumericUtil;
 import com.ldd.wallet.address.AddressCreatorManager;
 import com.ldd.wallet.address.EthereumAddressCreator;
+import com.ldd.wallet.address.TronAddressCreator;
 import com.ldd.wallet.keystore.HDMnemonicKeystore;
 import com.ldd.wallet.keystore.IMTKeystore;
 import com.ldd.wallet.keystore.Keystore;
@@ -103,13 +104,12 @@ public class WalletManager {
   }
 
   public static Wallet importWalletFromKeystore(Metadata metadata, String keystoreContent,
-      String password, boolean overwrite) {
-    WalletKeystore importedKeystore = validateKeystore(keystoreContent, password);
-
+      String password, boolean overwrite) throws Exception {
+    WalletKeystore importedKeystore = validateKeystore(keystoreContent, password,
+        metadata.getChainType());
     if (metadata.getSource() == null) {
       metadata.setSource(Metadata.FROM_KEYSTORE);
     }
-
     String privateKey = NumericUtil.bytesToHex(importedKeystore.decryptCiphertext(password));
     try {
       new PrivateKeyValidator(privateKey).validate();
@@ -150,6 +150,9 @@ public class WalletManager {
       case ChainType.LITECOIN:
         keystore = HDMnemonicKeystore.create(metadata, password, mnemonicCodes, path);
         break;
+      case ChainType.TRON:
+        keystore = V3MnemonicKeystore.create(metadata, password, mnemonicCodes, path);
+        break;
       default:
         break;
     }
@@ -168,8 +171,8 @@ public class WalletManager {
   }
 
   public static Wallet findWalletByKeystore(String chainType, String keystoreContent,
-      String password) {
-    WalletKeystore walletKeystore = validateKeystore(keystoreContent, password);
+      String password) throws Exception {
+    WalletKeystore walletKeystore = validateKeystore(keystoreContent, password, chainType);
 
     byte[] prvKeyBytes = walletKeystore.decryptCiphertext(password);
     String address = new EthereumAddressCreator().fromPrivateKey(prvKeyBytes);
@@ -334,7 +337,8 @@ public class WalletManager {
     return dir.delete();
   }
 
-  private static V3Keystore validateKeystore(String keystoreContent, String password) {
+  private static V3Keystore validateKeystore(String keystoreContent, String password,
+      String chainType) throws Exception {
     V3Keystore importedKeystore = unmarshalKeystore(keystoreContent, V3Keystore.class);
     if (Strings.isNullOrEmpty(importedKeystore.getAddress())
         || importedKeystore.getCrypto() == null) {
@@ -348,7 +352,14 @@ public class WalletManager {
     }
 
     byte[] prvKey = importedKeystore.decryptCiphertext(password);
-    String address = new EthereumAddressCreator().fromPrivateKey(prvKey);
+    String address = "";
+    if (ChainType.ETHEREUM.equals(chainType)) {
+      address = new EthereumAddressCreator().fromPrivateKey(prvKey);
+    } else if (ChainType.TRON.equals(chainType)) {
+      address = new TronAddressCreator().fromPrivateKey(prvKey);
+    } else {
+      throw new Exception("ChainType not found");
+    }
     if (Strings.isNullOrEmpty(address) || !address
         .equalsIgnoreCase(importedKeystore.getAddress())) {
       throw new TokenException(Messages.PRIVATE_KEY_ADDRESS_NOT_MATCH);
