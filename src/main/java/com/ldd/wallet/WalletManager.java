@@ -272,19 +272,15 @@ public class WalletManager {
     if (Strings.isNullOrEmpty(address)) {
       return null;
     }
-
     for (IMTKeystore keystore : keystoreMap.values()) {
-
       if (Strings.isNullOrEmpty(keystore.getAddress())) {
         continue;
       }
-
       if (keystore.getMetadata().getChainType().equals(type) && keystore.getAddress()
           .equals(address)) {
         return keystore;
       }
     }
-
     return null;
   }
 

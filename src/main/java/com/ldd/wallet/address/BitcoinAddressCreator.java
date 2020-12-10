@@ -24,11 +24,7 @@ public class BitcoinAddressCreator implements AddressCreator {
     } else {
       key = ECKey.fromPrivate(NumericUtil.hexToBytes(prvKeyHex));
     }
-    System.out.println("-----"+key.getPublicKeyAsHex());
     byte[] pubKeyHash = key.getPubKeyHash();
-    System.out.println("-----"+Hex.toHexString(pubKeyHash));
-    System.out.println("-----"+ Arrays.toString(key.getPubKeyPoint().getEncoded()));
-    System.out.println("-----"+new Address(this.networkParameters, pubKeyHash).toBase58());
     return new Address(this.networkParameters, pubKeyHash).toBase58();
 //    return key.toAddress(this.networkParameters).toBase58();
   }

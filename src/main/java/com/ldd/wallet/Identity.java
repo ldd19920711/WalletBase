@@ -139,7 +139,6 @@ public class Identity {
 
   void removeWallet(String walletId) {
     this.keystore.getWalletIDs().remove(walletId);
-
     int idx = 0;
     for (; idx < wallets.size(); idx++) {
       Wallet wallet = wallets.get(idx);
@@ -147,7 +146,13 @@ public class Identity {
         break;
       }
     }
-    this.wallets.remove(idx);
+    if (idx >= this.wallets.size()) {
+      return;
+    }
+    Wallet wallet = this.wallets.get(idx);
+    if (wallet != null) {
+      this.wallets.remove(idx);
+    }
     flush();
   }
 

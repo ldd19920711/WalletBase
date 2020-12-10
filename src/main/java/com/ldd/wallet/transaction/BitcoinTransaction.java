@@ -58,7 +58,7 @@ public class BitcoinTransaction implements TransactionSigner {
 
 
   public BitcoinTransaction(String to, int changeIdx, long amount, long fee,
-      ArrayList<UTXO> outputs) {
+      List<UTXO> outputs) {
     this.to = to;
     this.amount = amount;
     this.fee = fee;
