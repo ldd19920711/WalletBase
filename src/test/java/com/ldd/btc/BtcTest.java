@@ -3,40 +3,41 @@ package com.ldd.btc;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableList;
+import com.ldd.foundation.utils.MetaUtil;
 import com.ldd.wallet.Identity;
 import com.ldd.wallet.Wallet;
 import com.ldd.wallet.WalletManager;
+import com.ldd.wallet.address.SegWitBitcoinAddressCreator;
 import com.ldd.wallet.keystore.HDMnemonicKeystore;
-import com.ldd.wallet.model.BIP44Util;
-import com.ldd.wallet.model.ChainId;
-import com.ldd.wallet.model.ChainType;
-import com.ldd.wallet.model.Metadata;
-import com.ldd.wallet.model.Network;
+import com.ldd.wallet.model.*;
 import com.ldd.wallet.transaction.BitcoinTransaction;
 import com.ldd.wallet.transaction.BitcoinTransaction.UTXO;
 import com.ldd.wallet.transaction.TxSignResult;
-import java.io.File;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.DeterministicSeed;
+import org.bouncycastle.asn1.cms.KEKIdentifier;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * BTC-Wallet相关操作
@@ -101,12 +102,12 @@ public class BtcTest {
             "输出普通地址对应私钥:{" + WalletManager.bigIntegerToBase58(wallet.exportPrivateKey(password))
                 + "}");
     System.out.println("输出xpub:{" + ((HDMnemonicKeystore) (wallet.getKeystore())).getXpub() + "}");
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
       System.out
           .printf("输出普通多地址i={%s},address={%s},privateKey={%s}%n", i, wallet.newReceiveAddress(i),
               WalletManager.bigIntegerToBase58(wallet.exportPrivateKey(password, i)));
     }
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
       System.out.printf("输出普通多地址(找零)i={%s},address={%s},privateKey={%s}%n", i,
           wallet.newReceiveAddress(i),
           WalletManager.bigIntegerToBase58(wallet.exportPrivateKey(password, i)));
@@ -121,16 +122,31 @@ public class BtcTest {
     System.out.printf("输出隔离见证地址对应私钥:{%s}%n",
         WalletManager.bigIntegerToBase58(wallet.exportPrivateKey(password)));
     System.out.printf("输出xpub:{%s}%n", ((HDMnemonicKeystore) (wallet.getKeystore())).getXpub());
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
       System.out
           .printf("输出隔离见证多地址i={%s},address={%s},privateKey={%s}%n", i, wallet.newReceiveAddress(i),
               WalletManager.bigIntegerToBase58(wallet.exportPrivateKey(password, i)));
     }
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
       System.out.printf("输出隔离见证多地址(找零)i={%s},address={%s},privateKey={%s}%n", i,
           wallet.newReceiveAddress(i),
           WalletManager.bigIntegerToBase58(wallet.exportPrivateKey(password, i)));
     }
+  }
+
+  @Test
+  public void testXpub() {
+    Metadata metadata = new Metadata();
+    metadata.setChainType(ChainType.BITCOIN);
+    metadata.setNetwork(Network.MAINNET);
+    metadata.setSource(Metadata.FROM_WIF);
+    metadata.setSegWit(Metadata.NONE);
+    NetworkParameters networkParameters = MetaUtil.getNetWork(metadata);
+    String xpub = "xpub6D3xDPiDqYyFgmyWFgmGiD8wDEorxGGET8q7PUJGVofYsa38RJRwkXVtys76rSnZpCJiwzSyPWmQvwC1ji3Sd6u24m3FYnEzixbAZN4QUBD";
+    DeterministicKey key = DeterministicKey.deserializeB58(xpub, networkParameters);
+    DeterministicKey changeKey = HDKeyDerivation.deriveChildKey(key, ChildNumber.ZERO);
+    DeterministicKey indexKey = HDKeyDerivation.deriveChildKey(changeKey, new ChildNumber(0));
+    System.out.println(indexKey.toAddress(networkParameters).toBase58());
   }
 
   /**
